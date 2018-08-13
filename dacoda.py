@@ -55,3 +55,5 @@ for face in range(6):
     bpy.ops.object.material_slot_assign()
 
     bpy.ops.object.mode_set(mode='OBJECT')
+
+    bpy.data.objects["Cube"].data.polygons[face].select = False
