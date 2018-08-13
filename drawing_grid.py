@@ -1,6 +1,7 @@
 # filename = "/home/dacoda/projects/benjamin-blender/drawing_grid.py"; exec(compile(open(filename).read(), filename, 'exec'))
 
 import bmesh
+import copy
 
 import logging
 logging.basicConfig(level=logging.DEBUG)
@@ -64,6 +65,8 @@ class Grid():
         self.grid_object.data.materials.append(self.color_material)
         self.color_material.diffuse_color = (1, 0, 0)
 
+        self.show_gridlines()
+
     def show_gridlines(self):
         """
         Mark all edges in this object as freestyle, and enable
@@ -78,11 +81,76 @@ class Grid():
         bpy.context.scene.render.use_freestyle = True
         bpy.context.scene.render.layers["RenderLayer"].freestyle_settings.linesets["LineSet"].select_edge_mark = True
 
+class Cube():
+
+    def __init__(self, location, length, width, height, color=None):
+        bpy.ops.mesh.primitive_cube_add(location=(0, 0, 0), radius = 0.5)
+        bpy.ops.transform.resize(value=(length, width, height))
+        bpy.ops.transform.translate(value=(length / 2 + location[0], width / 2 + location[1], height/2))
+
+        self.object = bpy.context.object
+
+        if color is not None:
+            self.set_color(*color)
+
+    def set_color(self, red, green, blue):
+        """
+        color_spec should be a 3-tuple of (R, G, B)
+        """
+        self.color_material = bpy.data.materials.new(name="Color Material")
+        self.material_slots = self.object.material_slots
+        self.object.data.materials.append(self.color_material)
+        self.color_material.diffuse_color = (red, green, blue)
+
 grid = Grid(10)
 
-for i in [grid.polygon_index_from_coordinate(x, y) for x, y in [(0, 0), (0, 1), (1, 1), (1, 0)]]:
-    grid.grid_object.data.polygons[i].material_index = 1
 
+yellow_cube = \
+    {
+        "length": 2,
+        "width": 2,
+        "height": 0.2,
+        "color": (1, 1, 0)
+    }
 
+red_cube = \
+    {
+        "length": 1,
+        "width": 1,
+        "height": 0.4,
+        "color": (1, 0, 0)
+    }
 
+grey_cube = \
+    {
+        "length": 1,
+        "width": 1,
+        "height": 0.3,
+        "color": (0.4, 0.4, 0.4)
+    }
 
+green_cube = \
+    {
+        "length": 2,
+        "width": 2,
+        "height": 0.6,
+        "color": (0, 1, 0)
+    }
+
+def move_cube(cube, new_location):
+    duplicate = copy.deepcopy(cube)
+    duplicate["location"] = new_location
+    return duplicate
+
+red_cubes = [move_cube(red_cube, new_location) for new_location in [(3, 1), (4, 8), (6, 8)]]
+yellow_cubes = [move_cube(yellow_cube, new_location) for new_location in [(0, 0), (8, 8)]]
+green_cubes = [move_cube(green_cube, new_location) for new_location in [(6, 0), (8, 3), (0, 8)]]
+grey_cubes = [move_cube(grey_cube, new_location) for new_location in [(2, 4), (4, 6), (6, 7)]]
+
+cubes = red_cubes + yellow_cubes + green_cubes + grey_cubes
+
+for cube in cubes:
+    cube = Cube(**cube)
+
+# for i in [grid.polygon_index_from_coordinate(x, y) for x, y in [(0, 0), (0, 1), (1, 1), (1, 0)]]:
+#     grid.grid_object.data.polygons[i].material_index = 1
